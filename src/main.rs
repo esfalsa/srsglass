@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use clap::Parser;
+use srsglass::parse_dump;
 
 /// A command-line utility for generating NationStates region update timesheets
 #[derive(Parser, Debug)]
@@ -34,12 +35,19 @@ fn main() -> Result<()> {
 
     let agent = ureq::AgentBuilder::new().user_agent(&user_agent).build();
 
-    if args.use_dump && Path::new(&args.dump_path).exists() {
+    let mut dump_path = Path::new(&args.dump_path);
+
+    if args.use_dump && dump_path.exists() {
         println!("Using existing data dump");
     } else {
         println!("Downloading data dump");
-        srsglass::download_dump(&agent, "regions.xml.gz")?;
+        dump_path = Path::new("regions.xml.gz");
+        srsglass::download_dump(&agent, dump_path)?;
     }
+
+    println!("Parsing data dump");
+
+    let regions = parse_dump(dump_path)?;
 
     Ok(())
 }

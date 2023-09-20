@@ -6,4 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 clap = { version = "4.4.4", features = ["derive"] }
+flate2 = "1.0.27"
+quick-xml = "0.30.0"
 ureq = "2.7.1"
