@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use clap::Parser;
-use srsglass::parse_dump;
+use srsglass::{download_dump, parse_dump, save_to_excel};
 
 /// A command-line utility for generating NationStates region update timesheets
 #[derive(Parser, Debug)]
@@ -19,6 +19,10 @@ struct Cli {
     /// Use the current data dump instead of downloading
     #[arg(short = 'd', long = "dump", default_value_t = false)]
     use_dump: bool,
+
+    /// Name of the output file
+    #[arg(short, long, default_value = "srsglass.xlsx")]
+    outfile: String,
 }
 
 fn main() -> Result<()> {
@@ -42,12 +46,26 @@ fn main() -> Result<()> {
     } else {
         println!("Downloading data dump");
         dump_path = Path::new("regions.xml.gz");
-        srsglass::download_dump(&agent, dump_path)?;
+        download_dump(&agent, dump_path)?;
     }
 
     println!("Parsing data dump");
 
     let regions = parse_dump(dump_path)?;
+
+    let total_population = regions
+        .last()
+        .and_then(|region| {
+            region
+                .population
+                .zip(region.nations_before)
+                .map(|(population, nations_before)| population + nations_before)
+        })
+        .expect("Could not find total world population");
+
+    save_to_excel(regions.into_iter(), total_population, &args.outfile)?;
+
+    println!("Saved timesheet to {}", args.outfile);
 
     Ok(())
 }

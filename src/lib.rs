@@ -1,23 +1,24 @@
 use anyhow::Result;
 use flate2::read::GzDecoder;
 use quick_xml::{events::Event, Reader};
+use rust_xlsxwriter::Workbook;
 use std::{fs::File, io::BufReader, path::Path};
 use ureq::Agent;
 
 #[derive(Default, Debug)]
 pub struct Region {
-    name: Option<String>,
-    // factbook: Option<String>,
-    population: Option<i32>,
+    pub name: Option<String>,
+    factbook: Option<String>,
+    pub population: Option<i32>,
     // delegate: Option<String>,
-    delegate_votes: Option<i32>,
-    delegate_exec: Option<bool>,
+    pub delegate_votes: Option<i32>,
+    pub delegate_exec: Option<bool>,
     // frontier: Option<bool>,
     // governor: Option<String>,
-    last_major: Option<i64>,
-    last_minor: Option<i64>,
-    nations_before: Option<i32>,
-    embassies: Vec<String>,
+    pub last_major: Option<i64>,
+    pub last_minor: Option<i64>,
+    pub nations_before: Option<i32>,
+    pub embassies: Vec<String>,
 }
 
 pub fn download_dump(agent: &Agent, output_file: impl AsRef<Path>) -> Result<()> {
@@ -91,6 +92,11 @@ pub fn parse_dump(dump_path: impl AsRef<Path>) -> Result<Vec<Region>> {
                     }
                 }
             }
+            Ok(Event::CData(e)) => {
+                if let Some(b"FACTBOOK") = current_tag.as_deref() {
+                    current_region.factbook = Some(e.escape()?.unescape()?.trim().to_string());
+                }
+            }
             Ok(Event::Eof) => break,
             Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
             _ => (),
@@ -100,4 +106,105 @@ pub fn parse_dump(dump_path: impl AsRef<Path>) -> Result<Vec<Region>> {
     }
 
     Ok(regions)
+}
+
+pub fn save_to_excel(
+    regions: impl Iterator<Item = Region>,
+    total_population: i32,
+    output_file: impl AsRef<Path>,
+) -> Result<()> {
+    const MAJOR_LENGTH: i32 = 5350;
+    const MINOR_LENGTH: i32 = 3550;
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    worksheet.write_row(
+        0,
+        0,
+        [
+            "Region",
+            "Link",
+            "Population",
+            "Total Nations",
+            "Minor",
+            "Major",
+            "Del. Votes",
+            "Del. Endos",
+            "WFE",
+        ],
+    )?;
+
+    let mut row_index = 1;
+
+    for region in regions {
+        let Region {
+            name: Some(name),
+            population: Some(population),
+            delegate_votes: Some(delegate_votes),
+            factbook: Some(mut factbook),
+            nations_before: Some(nations_before),
+            ..
+        } = region
+        else {
+            continue;
+        };
+
+        worksheet.write_string(row_index, 0, &name)?;
+
+        let link = format!(
+            "https://www.nationstates.net/region={}",
+            name.to_lowercase().replace(' ', "_")
+        );
+        worksheet.write_url(row_index, 1, link.as_str())?;
+
+        worksheet.write_number(row_index, 2, population)?;
+
+        worksheet.write_number(row_index, 3, nations_before)?;
+
+        let progress = nations_before as f32 / total_population as f32;
+
+        let minor_duration = (progress * MINOR_LENGTH as f32).floor() as i32;
+        let minor_h = minor_duration / 3600;
+        let minor_m = (minor_duration / 60) % 60;
+        let minor_s = minor_duration % 60;
+        worksheet.write_string(
+            row_index,
+            4,
+            format!("{minor_h}:{minor_m:0>2}:{minor_s:0>2}"),
+        )?;
+
+        let major_duration = (progress * MAJOR_LENGTH as f32).floor() as i32;
+        let major_h = major_duration / 3600;
+        let major_m = (major_duration / 60) % 60;
+        let major_s = major_duration % 60;
+        worksheet.write_string(
+            row_index,
+            5,
+            format!("{major_h}:{major_m:0>2}:{major_s:0>2}"),
+        )?;
+
+        worksheet.write_number(row_index, 6, delegate_votes)?;
+
+        worksheet.write_number(
+            row_index,
+            7,
+            if delegate_votes == 0 {
+                delegate_votes
+            } else {
+                delegate_votes - 1
+            },
+        )?;
+
+        // truncate factbook entry to maximum string length supported by Excel
+        // https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
+        factbook.truncate(32767);
+        worksheet.write_string(row_index, 8, factbook)?;
+
+        row_index += 1;
+    }
+
+    workbook.save(output_file)?;
+
+    Ok(())
 }
