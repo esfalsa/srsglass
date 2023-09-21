@@ -112,10 +112,9 @@ pub fn save_to_excel(
     regions: impl Iterator<Item = Region>,
     total_population: i32,
     output_file: impl AsRef<Path>,
+    major_length: i32,
+    minor_length: i32,
 ) -> Result<()> {
-    const MAJOR_LENGTH: i32 = 5350;
-    const MINOR_LENGTH: i32 = 3550;
-
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
@@ -164,7 +163,7 @@ pub fn save_to_excel(
 
         let progress = nations_before as f32 / total_population as f32;
 
-        let minor_duration = (progress * MINOR_LENGTH as f32).floor() as i32;
+        let minor_duration = (progress * minor_length as f32).floor() as i32;
         let minor_h = minor_duration / 3600;
         let minor_m = (minor_duration / 60) % 60;
         let minor_s = minor_duration % 60;
@@ -174,7 +173,7 @@ pub fn save_to_excel(
             format!("{minor_h}:{minor_m:0>2}:{minor_s:0>2}"),
         )?;
 
-        let major_duration = (progress * MAJOR_LENGTH as f32).floor() as i32;
+        let major_duration = (progress * major_length as f32).floor() as i32;
         let major_h = major_duration / 3600;
         let major_m = (major_duration / 60) % 60;
         let major_s = major_duration % 60;

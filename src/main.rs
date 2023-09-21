@@ -23,6 +23,14 @@ struct Cli {
     /// Name of the output file
     #[arg(short, long, default_value = "srsglass.xlsx")]
     outfile: String,
+
+    /// Length of major update, in seconds
+    #[arg(long = "major", default_value_t = 5350)]
+    major_length: i32,
+
+    /// Length of minor update, in seconds
+    #[arg(long = "minor", default_value_t = 3550)]
+    minor_length: i32,
 }
 
 fn main() -> Result<()> {
@@ -63,7 +71,13 @@ fn main() -> Result<()> {
         })
         .expect("Could not find total world population");
 
-    save_to_excel(regions.into_iter(), total_population, &args.outfile)?;
+    save_to_excel(
+        regions.into_iter(),
+        total_population,
+        &args.outfile,
+        args.major_length,
+        args.minor_length,
+    )?;
 
     println!("Saved timesheet to {}", args.outfile);
 
