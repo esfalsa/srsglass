@@ -2,7 +2,7 @@ use anyhow::Result;
 use flate2::read::GzDecoder;
 use quick_xml::{events::Event, Reader};
 use rust_xlsxwriter::{Color, ExcelDateTime, Format, Workbook};
-use std::{fs::File, io::BufReader, path::Path};
+use std::{fs::File, io::BufReader, path::Path, time::SystemTime};
 use ureq::Agent;
 
 #[derive(Default, Debug)]
@@ -146,6 +146,48 @@ pub fn save_to_excel(
     let duration_format = Format::new().set_num_format("[h]:mm:ss");
     worksheet.set_column_format(4, &duration_format)?;
     worksheet.set_column_format(5, &duration_format)?;
+
+    worksheet.write_column(
+        0,
+        11,
+        [
+            "World Data",
+            "Nations",
+            "Major Length",
+            "Secs/Nation",
+            "Nations/Sec",
+            "Minor Length",
+            "Secs/Nation",
+            "Nations/Sec",
+            "",
+            "Srsglass Version",
+            "Date Generated",
+        ],
+    )?;
+
+    worksheet.write_number(1, 12, total_population)?;
+    worksheet.write_number(2, 12, major_length)?;
+    worksheet.write_number(3, 12, major_length as f64 / total_population as f64)?;
+    worksheet.write_number(4, 12, total_population as f64 / major_length as f64)?;
+    worksheet.write_number(5, 12, minor_length)?;
+    worksheet.write_number(6, 12, minor_length as f64 / total_population as f64)?;
+    worksheet.write_number(7, 12, total_population as f64 / minor_length as f64)?;
+    worksheet.write_string(9, 12, env!("CARGO_PKG_VERSION"))?;
+
+    // set column width to fit date
+    worksheet.set_column_width(12, 10)?;
+
+    worksheet.write_datetime_with_format(
+        10,
+        12,
+        &ExcelDateTime::from_timestamp(
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)?
+                .as_secs()
+                .try_into()?,
+        )?,
+        &Format::new().set_num_format("yyyy-mm-dd;@"),
+    )?;
 
     let mut row_index = 1;
 
