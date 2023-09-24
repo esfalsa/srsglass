@@ -2,7 +2,9 @@ use std::path::Path;
 
 use anyhow::Result;
 use clap::Parser;
-use srsglass::{download_dump, parse_dump, save_to_excel};
+use srsglass::{
+    download_dump, get_governorless_regions, get_passwordless_regions, parse_dump, save_to_excel,
+};
 
 /// A command-line utility for generating NationStates region update timesheets
 #[derive(Parser, Debug)]
@@ -11,14 +13,6 @@ struct Cli {
     /// The name of your nation, to identify you to NationStates
     #[arg(short = 'n', long = "nation")]
     user_nation: String,
-
-    /// Path to the data dump
-    #[arg(short = 'p', long = "path", default_value = "regions.xml.gz")]
-    dump_path: String,
-
-    /// Use the current data dump instead of downloading
-    #[arg(short = 'd', long = "dump", default_value_t = false)]
-    use_dump: bool,
 
     /// Name of the output file
     #[arg(short, long, default_value = "srsglass.xlsx")]
@@ -31,6 +25,14 @@ struct Cli {
     /// Length of minor update, in seconds
     #[arg(long = "minor", default_value_t = 3550)]
     minor_length: i32,
+
+    /// Use the current data dump instead of downloading
+    #[arg(short = 'd', long = "dump", default_value_t = false)]
+    use_dump: bool,
+
+    /// Path to the data dump
+    #[arg(short = 'p', long = "path", default_value = "regions.xml.gz")]
+    dump_path: String,
 }
 
 fn main() -> Result<()> {
@@ -71,15 +73,25 @@ fn main() -> Result<()> {
         })
         .expect("Could not find total world population");
 
+    println!("Saving timesheet");
+
     save_to_excel(
         regions.into_iter(),
         total_population,
         &args.outfile,
         args.major_length,
         args.minor_length,
+        get_governorless_regions(&agent)?,
+        get_passwordless_regions(&agent)?,
     )?;
 
     println!("Saved timesheet to {}", args.outfile);
+
+    // let governorless =
+    // let passwordless = get_passwordless_regions(&agent)?;
+
+    // dbg!(governorless);
+    // dbg!(passwordless);
 
     Ok(())
 }
