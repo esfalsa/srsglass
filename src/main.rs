@@ -1,10 +1,9 @@
-use std::path::Path;
-
 use anyhow::Result;
 use clap::Parser;
 use srsglass::{
     download_dump, get_governorless_regions, get_passwordless_regions, parse_dump, save_to_excel,
 };
+use std::path::Path;
 
 /// A command-line utility for generating NationStates region update timesheets
 #[derive(Parser, Debug)]
