@@ -32,6 +32,10 @@ struct Cli {
     /// Path to the data dump
     #[arg(short = 'p', long = "path", default_value = "regions.xml.gz")]
     dump_path: String,
+
+    /// The number of milliseconds to use in timestamps
+    #[arg(long = "precision", default_value_t = 0)]
+    precision: i32,
 }
 
 fn main() -> Result<()> {
@@ -82,15 +86,10 @@ fn main() -> Result<()> {
         args.minor_length,
         get_governorless_regions(&agent)?,
         get_passwordless_regions(&agent)?,
+        args.precision,
     )?;
 
     println!("Saved timesheet to {}", args.outfile);
-
-    // let governorless =
-    // let passwordless = get_passwordless_regions(&agent)?;
-
-    // dbg!(governorless);
-    // dbg!(passwordless);
 
     Ok(())
 }

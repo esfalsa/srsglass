@@ -116,6 +116,7 @@ pub fn save_to_excel(
     minor_length: i32,
     governorless: Vec<String>,
     passwordless: Vec<String>,
+    timestamp_precision: i32,
 ) -> Result<()> {
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
@@ -143,7 +144,22 @@ pub fn save_to_excel(
         ],
     )?;
 
-    let duration_format = Format::new().set_num_format("[h]:mm:ss");
+    // excel only suppots up to 3 milliseconds of precision
+    if !(0..=3).contains(&timestamp_precision) {
+        return Err(anyhow::anyhow!(
+            "timestamp_precision must be between 0 and 3"
+        ));
+    }
+
+    let duration_string = match timestamp_precision {
+        0 => "[h]:mm:ss",
+        1 => "[h]:mm:ss.0",
+        2 => "[h]:mm:ss.00",
+        3 => "[h]:mm:ss.000",
+        _ => unreachable!(),
+    };
+
+    let duration_format = Format::new().set_num_format(duration_string);
     worksheet.set_column_format(4, &duration_format)?;
     worksheet.set_column_format(5, &duration_format)?;
 
@@ -176,6 +192,10 @@ pub fn save_to_excel(
 
     // set column width to fit date
     worksheet.set_column_width(12, 10)?;
+
+    // set column widths to fit timestamp
+    worksheet.set_column_width(4, 10)?;
+    worksheet.set_column_width(5, 10)?;
 
     worksheet.write_datetime_with_format(
         10,
@@ -236,26 +256,30 @@ pub fn save_to_excel(
 
         worksheet.write_number(row_index, 3, nations_before)?;
 
-        let progress = nations_before as f32 / total_population as f32;
+        let progress = nations_before as f64 / total_population as f64;
 
-        let minor_duration = (progress * minor_length as f32).floor() as i32;
-        let minor_h = minor_duration / 3600;
-        let minor_m = (minor_duration / 60) % 60;
-        let minor_s = minor_duration % 60;
+        let minor_duration = progress * minor_length as f64;
+        let minor_h = (minor_duration / 3600.0).floor() as u16;
+        let minor_m = ((minor_duration / 60.0) % 60.0).floor() as u8;
+        let minor_s = (minor_duration % 60.0).floor() as u8;
+        let minor_ms = (minor_duration.fract() * 1000.0).round().clamp(0.0, 999.0) as u16;
+
         worksheet.write_datetime(
             row_index,
             4,
-            &ExcelDateTime::from_hms(minor_h.try_into()?, minor_m.try_into()?, minor_s)?,
+            &ExcelDateTime::from_hms_milli(minor_h, minor_m, minor_s, minor_ms)?,
         )?;
 
-        let major_duration = (progress * major_length as f32).floor() as i32;
-        let major_h = major_duration / 3600;
-        let major_m = (major_duration / 60) % 60;
-        let major_s = major_duration % 60;
+        let major_duration = progress * major_length as f64;
+        let major_h = (major_duration / 3600.0).floor() as u16;
+        let major_m = ((major_duration / 60.0) % 60.0).floor() as u8;
+        let major_s = (major_duration % 60.0).floor() as u8;
+        let major_ms = (major_duration.fract() * 1000.0).round().clamp(0.0, 999.0) as u16;
+
         worksheet.write_datetime(
             row_index,
             5,
-            &ExcelDateTime::from_hms(major_h.try_into()?, major_m.try_into()?, major_s)?,
+            &ExcelDateTime::from_hms_milli(major_h, major_m, major_s, major_ms)?,
         )?;
 
         worksheet.write_number(row_index, 6, delegate_votes)?;
@@ -300,7 +324,6 @@ fn get_regions(agent: &Agent, url: &str) -> Result<Vec<String>> {
                 collecting = false;
             }
             Event::Text(e) if collecting => {
-                // dbg!(e.unescape()?);
                 regions = e.unescape()?.split(',').map(|s| s.to_string()).collect();
             }
             Event::Eof => break,

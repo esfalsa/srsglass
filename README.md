@@ -19,14 +19,15 @@ A command-line utility for generating NationStates region update timesheets
 Usage: srsglass [OPTIONS] --nation <USER_NATION>
 
 Options:
-  -n, --nation <USER_NATION>  The name of your nation, to identify you to NationStates
-  -o, --outfile <OUTFILE>     Name of the output file [default: srsglass.xlsx]
-      --major <MAJOR_LENGTH>  Length of major update, in seconds [default: 5350]
-      --minor <MINOR_LENGTH>  Length of minor update, in seconds [default: 3550]
-  -d, --dump                  Use the current data dump instead of downloading
-  -p, --path <DUMP_PATH>      Path to the data dump [default: regions.xml.gz]
-  -h, --help                  Print help
-  -V, --version               Print version
+  -n, --nation <USER_NATION>   The name of your nation, to identify you to NationStates
+  -o, --outfile <OUTFILE>      Name of the output file [default: srsglass.xlsx]
+      --major <MAJOR_LENGTH>   Length of major update, in seconds [default: 5350]
+      --minor <MINOR_LENGTH>   Length of minor update, in seconds [default: 3550]
+  -d, --dump                   Use the current data dump instead of downloading
+  -p, --path <DUMP_PATH>       Path to the data dump [default: regions.xml.gz]
+      --precision <PRECISION>  The number of milliseconds to use in timestamps [default: 0]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
 ## Performance
