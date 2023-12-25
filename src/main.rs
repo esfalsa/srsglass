@@ -1,8 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use srsglass::{
-    download_dump, get_governorless_regions, get_passwordless_regions, parse_dump, save_to_excel,
-};
+use srsglass::Client;
 use std::path::Path;
 
 /// A command-line utility for generating NationStates region update timesheets
@@ -50,42 +48,24 @@ fn main() -> Result<()> {
         args.user_nation
     );
 
-    let agent = ureq::AgentBuilder::new().user_agent(&user_agent).build();
+    let client = Client::new(&user_agent);
 
-    let mut dump_path = Path::new(&args.dump_path);
+    let dump_path = Path::new(&args.dump_path);
 
-    if args.use_dump && dump_path.exists() {
+    let dump = if args.use_dump && dump_path.exists() {
         println!("Using existing data dump");
+        client.get_dump_from_file(dump_path)?
     } else {
         println!("Downloading data dump");
-        dump_path = Path::new("regions.xml.gz");
-        download_dump(&agent, dump_path)?;
-    }
-
-    println!("Parsing data dump");
-
-    let regions = parse_dump(dump_path)?;
-
-    let total_population = regions
-        .last()
-        .and_then(|region| {
-            region
-                .population
-                .zip(region.nations_before)
-                .map(|(population, nations_before)| population + nations_before)
-        })
-        .expect("Could not find total world population");
+        client.get_dump()?
+    };
 
     println!("Saving timesheet");
 
-    save_to_excel(
-        regions.into_iter(),
-        total_population,
+    dump.to_excel(
         &args.outfile,
         args.major_length,
         args.minor_length,
-        get_governorless_regions(&agent)?,
-        get_passwordless_regions(&agent)?,
         args.precision,
     )?;
 
