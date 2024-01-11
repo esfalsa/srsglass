@@ -350,7 +350,7 @@ impl Dump {
             )?,
             &Format::new().set_num_format("yyyy-mm-dd;@"),
         )?;
-        
+
         worksheet.write_datetime_with_format(
             11,
             12,
