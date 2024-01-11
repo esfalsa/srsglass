@@ -243,8 +243,7 @@ impl Dump {
         timestamp_precision: i32,
     ) -> Result<()> {
         let Dump {
-            dump_date: _dump_date, // Dump date is only used in the filename, which comes in from
-            // on high, so we can ignore it here.
+            dump_date,
             regions,
             governorless,
             passwordless,
@@ -320,6 +319,7 @@ impl Dump {
                 "",
                 "Srsglass Version",
                 "Date Generated",
+                "Dump Date",
             ],
         )?;
 
@@ -349,6 +349,13 @@ impl Dump {
                     .try_into()?,
             )?,
             &Format::new().set_num_format("yyyy-mm-dd;@"),
+        )?;
+        
+        worksheet.write_datetime_with_format(
+            11,
+            12,
+            &ExcelDateTime::parse_from_str(&dump_date.to_string())?,
+            &Format::new().set_num_format("yyyy-mm-dd"),
         )?;
 
         let mut row_index = 1;
