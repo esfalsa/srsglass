@@ -12,8 +12,9 @@ struct Cli {
     user_nation: String,
 
     /// Name of the output file
-    #[arg(short, long, default_value = "srsglass.xlsx")]
-    outfile: String,
+    // #[arg(short, long, default_value = "srsglass.xlsx")]
+    #[arg(short, long)]
+    outfile: Option<String>,
 
     /// Length of major update, in seconds
     #[arg(long = "major", default_value_t = 5350)]
@@ -41,6 +42,16 @@ fn main() -> Result<()> {
 
     println!("Running srsglass with user nation {}", args.user_nation);
 
+    let outfile = match args.outfile { 
+        Some(filename) => filename, 
+        None => { 
+            let local = chrono::Local::now().date_naive();
+            let filename: String = format!("spyglass{}.xlsx", local);
+
+            filename
+        }
+    };
+
     let user_agent = format!(
         "{}/{} (by:Esfalsa, usedBy:{})",
         env!("CARGO_PKG_NAME"),
@@ -60,16 +71,16 @@ fn main() -> Result<()> {
         client.get_dump()?
     };
 
-    println!("Saving timesheet");
+    println!("Saving timesheet to {outfile}");
 
     dump.to_excel(
-        &args.outfile,
+        &outfile,
         args.major_length,
         args.minor_length,
         args.precision,
     )?;
 
-    println!("Saved timesheet to {}", args.outfile);
+    println!("Saved timesheet to {}", outfile);
 
     Ok(())
 }
