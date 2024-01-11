@@ -53,24 +53,24 @@ impl Client {
     }
 
     /// Get the date NS will list this dump as in the archive.
-    fn compute_dump_date(&self, regions: &[Region]) -> Result<NaiveDate> { 
+    fn compute_dump_date(&self, regions: &[Region]) -> Result<NaiveDate> {
         // Extract first updating region
-        let Some(first_region) = regions.iter().min_by_key(|region| region.last_major) else { 
+        let Some(first_region) = regions.iter().min_by_key(|region| region.last_major) else {
             return Err(anyhow!("Regions not populated!"));
         };
 
         // Extract datetime of that regions last major update
-        let Some(first_update) = first_region.last_major else { 
+        let Some(first_update) = first_region.last_major else {
             return Err(anyhow!("Last update not present!"));
         };
 
-        let Some(datetime) = chrono::DateTime::from_timestamp(first_update, 0) else { 
+        let Some(datetime) = chrono::DateTime::from_timestamp(first_update, 0) else {
             return Err(anyhow!("Invalid date!"));
         };
 
         // Rebase the timestamp in EST
         let datetime = datetime.with_timezone(&Eastern);
-        let Some(datetime) = datetime.checked_sub_days(Days::new(1)) else { 
+        let Some(datetime) = datetime.checked_sub_days(Days::new(1)) else {
             return Err(anyhow!("Could not roll back one day!"));
         };
 
@@ -98,7 +98,7 @@ impl Client {
         let goverorless = self.get_governorless_regions()?;
         let passwordless = self.get_passwordless_regions()?;
 
-        let dump_date = self.compute_dump_date(&regions)?; 
+        let dump_date = self.compute_dump_date(&regions)?;
 
         Ok(Dump {
             dump_date,
@@ -244,7 +244,7 @@ impl Dump {
     ) -> Result<()> {
         let Dump {
             dump_date: _dump_date, // Dump date is only used in the filename, which comes in from
-                                   // on high, so we can ignore it here.
+            // on high, so we can ignore it here.
             regions,
             governorless,
             passwordless,

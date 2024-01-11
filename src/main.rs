@@ -68,9 +68,9 @@ fn main() -> Result<()> {
     println!("Saving timesheet");
 
     // Use dump's date to dynamically create the filename if none is specified
-    let outfile = match args.outfile { 
-        Some(filepath) => filepath, 
-        None => format!("spyglass{}.xlsx", dump.dump_date)
+    let outfile = match args.outfile {
+        Some(filepath) => filepath,
+        None => format!("spyglass{}.xlsx", dump.dump_date),
     };
 
     dump.to_excel(
