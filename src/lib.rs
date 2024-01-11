@@ -1,4 +1,7 @@
 use anyhow::{anyhow, Result};
+use chrono::naive::Days;
+use chrono::NaiveDate;
+use chrono_tz::US::Eastern;
 use flate2::read::GzDecoder;
 use quick_xml::{events::Event, Reader};
 use rust_xlsxwriter::{Color, ExcelDateTime, Format, Workbook};
@@ -24,6 +27,8 @@ pub struct Region {
 }
 
 pub struct Dump {
+    // Date that NS will consider this dump to be generated on
+    pub dump_date: NaiveDate,
     pub regions: Vec<Region>,
     pub governorless: Vec<String>,
     pub passwordless: Vec<String>,
@@ -47,12 +52,41 @@ impl Client {
         Self { agent }
     }
 
+    /// Get the date NS will list this dump as in the archive.
+    fn compute_dump_date(&self, regions: &[Region]) -> Result<NaiveDate> { 
+        // Extract first updating region
+        let Some(first_region) = regions.iter().min_by_key(|region| region.last_major) else { 
+            return Err(anyhow!("Regions not populated!"));
+        };
+
+        // Extract datetime of that regions last major update
+        let Some(first_update) = first_region.last_major else { 
+            return Err(anyhow!("Last update not present!"));
+        };
+
+        let Some(datetime) = chrono::DateTime::from_timestamp(first_update, 0) else { 
+            return Err(anyhow!("Invalid date!"));
+        };
+
+        // Rebase the timestamp in EST
+        let datetime = datetime.with_timezone(&Eastern);
+        let Some(datetime) = datetime.checked_sub_days(Days::new(1)) else { 
+            return Err(anyhow!("Could not roll back one day!"));
+        };
+
+        // After all that processing, return the naive date
+        Ok(datetime.date_naive())
+    }
+
     pub fn get_dump(&self) -> Result<Dump> {
         let regions = self.get_regions()?;
         let goverorless = self.get_governorless_regions()?;
         let passwordless = self.get_passwordless_regions()?;
 
+        let dump_date = self.compute_dump_date(&regions)?;
+
         Ok(Dump {
+            dump_date,
             regions,
             governorless: goverorless,
             passwordless,
@@ -64,7 +98,10 @@ impl Client {
         let goverorless = self.get_governorless_regions()?;
         let passwordless = self.get_passwordless_regions()?;
 
+        let dump_date = self.compute_dump_date(&regions)?; 
+
         Ok(Dump {
+            dump_date,
             regions,
             governorless: goverorless,
             passwordless,
@@ -206,6 +243,8 @@ impl Dump {
         timestamp_precision: i32,
     ) -> Result<()> {
         let Dump {
+            dump_date: _dump_date, // Dump date is only used in the filename, which comes in from
+                                   // on high, so we can ignore it here.
             regions,
             governorless,
             passwordless,

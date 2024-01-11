@@ -12,8 +12,13 @@ struct Cli {
     user_nation: String,
 
     /// Name of the output file
-    #[arg(short, long, default_value = "srsglass.xlsx")]
-    outfile: String,
+    #[arg(short, long)]
+    outfile: Option<String>,
+
+    // TODO
+    /// Overwrite output file?
+    // #[arg(short, long, default_value_t = false)]
+    // overwrite: bool,
 
     /// Length of major update, in seconds
     #[arg(long = "major", default_value_t = 5350)]
@@ -62,14 +67,20 @@ fn main() -> Result<()> {
 
     println!("Saving timesheet");
 
+    // Use dump's date to dynamically create the filename if none is specified
+    let outfile = match args.outfile { 
+        Some(filepath) => filepath, 
+        None => format!("spyglass{}.xlsx", dump.dump_date)
+    };
+
     dump.to_excel(
-        &args.outfile,
+        &outfile,
         args.major_length,
         args.minor_length,
         args.precision,
     )?;
 
-    println!("Saved timesheet to {}", args.outfile);
+    println!("Saved timesheet to {}", outfile);
 
     Ok(())
 }
