@@ -11,14 +11,9 @@ struct Cli {
     #[arg(short = 'n', long = "nation")]
     user_nation: String,
 
-    /// Name of the output file
+    /// Name of the output file [default: srsglassYYYY-MM-DD.xlsx]
     #[arg(short, long)]
     outfile: Option<String>,
-
-    // TODO
-    /// Overwrite output file?
-    // #[arg(short, long, default_value_t = false)]
-    // overwrite: bool,
 
     /// Length of major update, in seconds
     #[arg(long = "major", default_value_t = 5350)]

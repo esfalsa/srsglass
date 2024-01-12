@@ -61,11 +61,11 @@ impl Client {
 
         // Extract datetime of that regions last major update
         let Some(first_update) = first_region.last_major else {
-            return Err(anyhow!("Last update not present!"));
+            return Err(anyhow!("Could not find major update timestamp!"));
         };
 
         let Some(datetime) = chrono::DateTime::from_timestamp(first_update, 0) else {
-            return Err(anyhow!("Invalid date!"));
+            return Err(anyhow!("Invalid date found in dump!"));
         };
 
         // Rebase the timestamp in EST
