@@ -1,6 +1,6 @@
 /target
 
 regions.xml.gz
-srsglass.xlsx
+srsglass*.xlsx
 
 .DS_Store
