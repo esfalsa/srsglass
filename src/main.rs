@@ -65,7 +65,7 @@ fn main() -> Result<()> {
     // Use dump's date to dynamically create the filename if none is specified
     let outfile = match args.outfile {
         Some(filepath) => filepath,
-        None => format!("spyglass{}.xlsx", dump.dump_date),
+        None => format!("srsglass{}.xlsx", dump.dump_date),
     };
 
     dump.to_excel(
