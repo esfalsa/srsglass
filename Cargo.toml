@@ -4,11 +4,11 @@ version = "0.2.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.75"
-chrono = "0.4.31"
-chrono-tz = "0.8.5"
-clap = { version = "4.4.4", features = ["derive"] }
-flate2 = "1.0.27"
-quick-xml = "0.30.0"
-rust_xlsxwriter = "0.49.0"
-ureq = "2.7.1"
+anyhow = "1.0.86"
+chrono = "0.4.38"
+chrono-tz = "0.9.0"
+clap = { version = "4.5.15", features = ["derive"] }
+flate2 = "1.0.31"
+quick-xml = "0.36.1"
+rust_xlsxwriter = "0.73.0"
+ureq = "2.10.1"
