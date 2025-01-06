@@ -20,7 +20,7 @@ Usage: srsglass [OPTIONS] --nation <USER_NATION>
 
 Options:
   -n, --nation <USER_NATION>   The name of your nation, to identify you to NationStates
-  -o, --outfile <OUTFILE>      Name of the output file [default: srsglass.xlsx]
+  -o, --outfile <OUTFILE>      Name of the output file [default: srsglassYYYY-MM-DD.xlsx]
       --major <MAJOR_LENGTH>   Length of major update, in seconds [default: 5350]
       --minor <MINOR_LENGTH>   Length of minor update, in seconds [default: 3550]
   -d, --dump                   Use the current data dump instead of downloading
