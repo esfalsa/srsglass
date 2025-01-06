@@ -358,6 +358,8 @@ impl Dump {
             &Format::new().set_num_format("yyyy-mm-dd"),
         )?;
 
+        worksheet.set_freeze_panes(1, 0)?;
+
         let mut row_index = 1;
 
         for region in regions {
